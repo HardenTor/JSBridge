@@ -1,4 +1,7 @@
-/// JSBridge.js TypeScript definition file
+// JSBridge.js TypeScript definition file
+// v12.0
+// (c) 2019 Resco
+
 declare module MobileCRM {
 
 	class Size {
@@ -15,8 +18,12 @@ declare module MobileCRM {
 		platform: string;
 
 		command(command: string, params: any, success?: (data: any) => void, failed?: (error: string) => void, scope?: any);
+		invokeCommandPromise(command: string, params: any): Promise<any>;
 		getWindowSize(callback: (size: Size) => void, erroCallback?: (error: string) => void, scope?: any);
 		invokeMethodAsync(objectName: string, method: string, params: any, callback?: (retVal: any) => void, errorCallback?: (error: string) => void, scope?: any);
+		invokeMethodPromise(objectName: string, method: string, params: any): Promise<any>;
+		invokeStaticMethodAsync(assembly: string, typeName: string, method: string, paramsList: any[], callback?: (retVal: any) => void, errorCallback?: (error: string) => void, scope?: any);
+		invokeStaticMethodPromise(assembly: string, typeName: string, method: string, paramsList: any[]): Promise<any>;
 		raiseGlobalEvent(eventName: string, args: any);
 		onGlobalEvent(eventName: string, handler: (args: any) => void, bind: boolean, scope?: any);
 		enableZoom(enable: boolean);
@@ -228,14 +235,15 @@ declare module MobileCRM {
 		public static stringTable: { [key: string]: string };
 		public static initialized: boolean;
 
-		public static initialize(callback: (localization: Localization) => void, errorCallback?: (error: string) => void, scope?: any);
-		public static initializeEx(regularExpression: string, callback?: (localization: Localization) => void, errorCallback?: (error: string) => void, scope?: any);
-		public static getLoadedLangId(callback: (langId: string) => void, errorCallback?: (error: string) => void, scope?: any);
-		public static getTextOrDefault: (id: string, defaultString: string) => string;
-		public static getComponentLabel: (entityName: string, componentType: string, viewName: string) => string;
-		public static get: (id: string) => string;
-		public static getPlural: (id: string) => string;
-		public static makeId: (section: string, id: string) => string;
+		static initialize(callback: (localization: Localization) => void, errorCallback?: (error: string) => void, scope?: any);
+		static initializeEx(regularExpression: string, callback?: (localization: Localization) => void, errorCallback?: (error: string) => void, scope?: any);
+		static initializeAsync(regularExpression: string): Promise<Localization>;
+		static getLoadedLangId(callback: (langId: string) => void, errorCallback?: (error: string) => void, scope?: any);
+		static getTextOrDefault: (id: string, defaultString: string) => string;
+		static getComponentLabel: (entityName: string, componentType: string, viewName: string) => string;
+		static get: (id: string) => string;
+		static getPlural: (id: string) => string;
+		static makeId: (section: string, id: string) => string;
 	}
 
 	class CultureInfo {
@@ -248,7 +256,9 @@ declare module MobileCRM {
 		numberFormat: NumberFormat;
 
 		static initialize(callback: (cultureInfo: CultureInfo) => void, errorCallback?: (error: string) => void, scope?: any);
+		static initializeAsync(): Promise<CultureInfo>;
 		static load(culture: string, callback: (cultureInfo: CultureInfo) => void, errorCallback?: (error: string) => void, scope?: any);
+		static loadAsync(culture: string): Promise<CultureInfo>;
 		static shortDateString(date: Date): string;
 		static longDateString(date: Date): string;
 		static shortTimeString(date: Date): string;
@@ -326,6 +336,23 @@ declare module MobileCRM {
 		isNew: boolean;
 		/** The human readable name of the entity, e.g "Alexandro".*/
 		primaryName: string;
+
+		/**
+		 * Asynchronously loads the CRM reference.
+		 * @param entityName An entity name
+		 * @param id ID of record to load
+		 * @param success A callback function for successful asynchronous result
+		 * @param failed A callback function for command failure
+		 * @param scope Optional scope for calling the callbacks
+		 */
+		static loadById(entityName: string, id: string, success: (reference: Reference) => void, failed?: (err: string) => void, scope?: any);
+		/**
+		 * Asynchronously loads the CRM reference.
+		 * @param entityName An entity name
+		 * @param id ID of record to load
+		 * @returns Reference object representing entity record
+		 */
+		static loadAsync(entityName: string, id: string): Promise<Reference>;
 	}
 
 	class Relationship {
@@ -387,13 +414,18 @@ declare module MobileCRM {
 		save(callback: (error: string) => void);
 		saveAsync(forceMode?: boolean): Promise<DynamicEntity>;
 		update(callback: (error: string) => void);
-		public static createNew: (entityName: string, id?: string, primaryName?: string, properties?: any) => MobileCRM.DynamicEntity;
-		public static deleteById(entityName: string, id: string, sucess?: () => void, failed?: (error: string) => void, scope?: any);
-		public static loadById(entityName: string, id: string, sucess: (DynamicEntity: MobileCRM.DynamicEntity) => void, failed?: (error: string) => void, scope?: any);
-		public static saveDocumentBody(entityId: string, entityName: string, relationship: MobileCRM.Relationship, filePath: string, mimeType: string, sucess?: (result: MobileCRM.Reference) => void, failed?: (error: string) => void, scope?: any);
-		public static loadDocumentBody(entityName: string, id: string, sucess: (base64: string) => void, failed?: (error: string) => void, scope?: any);
-		public static unzipDocumentBody(entityName: string, id: string, targetDir: string, sucess?: () => void, failed?: (error: string) => void, scope?: any);
-		public static downloadAttachment(entityName: string, id: string, sucess: (base64: string) => void, failed?: (error: string) => void, scope?: any);
+		static createNew: (entityName: string, id?: string, primaryName?: string, properties?: any) => MobileCRM.DynamicEntity;
+		static deleteById(entityName: string, id: string, sucess?: () => void, failed?: (error: string) => void, scope?: any);
+		static deleteAsync(entityName: string, id: string): Promise<void>;
+		static loadById(entityName: string, id: string, sucess: (DynamicEntity: MobileCRM.DynamicEntity) => void, failed?: (error: string) => void, scope?: any);
+		static loadAsync(entityName: string, id: string): Promise<MobileCRM.DynamicEntity>;
+		static saveDocumentBody(entityId: string, entityName: string, relationship: MobileCRM.Relationship, filePath: string, mimeType: string, sucess?: (result: MobileCRM.Reference) => void, failed?: (error: string) => void, scope?: any);
+		static saveDocumentBodyAsync(entityId: string, entityName: string, relationship: MobileCRM.Relationship, filePath: string, mimeType: string): Promise<MobileCRM.Reference>;
+		static loadDocumentBody(entityName: string, id: string, sucess: (base64: string) => void, failed?: (error: string) => void, scope?: any);
+		static loadDocumentBodyAsync(entityName: string, id: string): Promise<string>;
+		static unzipDocumentBody(entityName: string, id: string, targetDir: string, sucess?: () => void, failed?: (error: string) => void, scope?: any);
+		static downloadAttachment(entityName: string, id: string, sucess: (base64: string) => void, failed?: (error: string) => void, scope?: any);
+		static downloadAttachmentAsync(entityName: string, id: string): Promise<string>;
 	}
 
 	class Metadata {
@@ -498,7 +530,7 @@ declare module MobileCRM {
 		/**
 		 * Gets current geo-location from platform-specific location service.
 		 * If the current platform does not support the location service, the <b>failed</b> handler is called with error "Unsupported".
-		 * @param success A callback function for successful asynchronous result. The <b>result</b> will carry an object with properties <b>latitude</b> and <b>longitude</b>.
+		 * @param success A callback function for successful asynchronous result. The <b>result</b> will carry an object with Location object.
 		 * @param failed A callback function for command failure. The <b>error</b> argument will carry the error message.
 		 * @param scope A scope for calling the callbacks; set &quot;null&quot; to call the callbacks in global scope.
 		 * @param age Max age in seconds to accept GPS.
@@ -506,6 +538,15 @@ declare module MobileCRM {
 		 * @param timeout Timeout in milliseconds (since v10.1).
 		 */
 		public static getLocation(success: (obj: Location) => void, failed?: (error: string) => void, scope?: any, age?: number, precision?: number, timeout?: number);
+		/**
+		 * Gets current geo-location from platform-specific location service.
+		 * If the current platform does not support the location service, the <b>failed</b> handler is called with error "Unsupported".
+		 * @param age Max age in seconds to accept GPS.
+		 * @param precision Desired accuracy in meters.
+		 * @param timeout Timeout in milliseconds (since v10.1).
+		 * @returns Promise resolved with Location object.
+		 */
+		public static getLocationAsync(age?: number, precision?: number, timeout?: number): Promise<Location>;
         public static requestObject(callback: (platform: Platform) => void, errorCallback: () => void, scope?: any);
         /**
          * @since 8.1
@@ -568,6 +609,8 @@ declare module MobileCRM {
 		public static synchronizeOnForeground(forceLogin: boolean);
 		public static getAppColor(colName: string, success: (url: string) => void, failed?: (err: string) => void, scope?: any);
 		public static getAppImage(imageName: string, colorize: string, success: (url: string) => void, failed?: (err: string) => void, scope?: any);
+		/** Display application login form. */
+		public static showAppLogin();
 		/**
 		 * Sets the application colors.
 		 * @since 11.2.2
@@ -634,6 +677,18 @@ declare module MobileCRM {
 		 * @param scope The scope for errorCallback.
 		 */
 		static runReport(fetch: string, reportXML: string, reportFormat: string, isExportOnly: boolean, isOnline: boolean, outputFile: string, success: (filePath: string) => void, failed?: (err: string) => void, scope?: any);
+		/**
+		 * @since 9.1
+		 * Executes the mobile reporting request which produces the mobile report document of given format.
+		 * @param fetch The fetch XML defining the entity (entities) query used as report input.
+		 * @param reportXML The mobile report XML definition which can be loaded from the resco_report entity or constructed dynamically. Ignored if IsExportOnly parameter is true.
+		 * @param reportFormat Report format: Pdf (default), Html, Excel, Text.
+		 * @param isExportOnly If true then ReportXml is optional. The default is false.
+		 * @param isOnline Indicates whether the report should be run against the online data or local database. The default is current application mode.
+		 * @param outputFile The full path to the output file. If omitted a temp file is created. The output path is always passed to the success callback.
+		 * @returns The file path to successfully created report.
+		 */
+		static runReportAsync(fetch: string, reportXML: string, reportFormat: string, isExportOnly: boolean, isOnline: boolean, outputFile: string): Promise<string>;
 		static showForm(entityName: string, source: Array<MobileCRM.Reference>, fetchXml: string, failed?: (err: string) => void, scope?: any);
 	}
 	class Questionnaire {
@@ -680,12 +735,25 @@ declare module MobileCRM.FetchXml {
 		public static deserializeFromXml(xml: string, success: (result: MobileCRM.FetchXml.Fetch) => void, failed?: (err: string) => void, scope?: any)
 		/**
 		 * @since 10.0
+		* Deserializes XML to the Fetch object.
+		 * @param xml A string defining the fetch XML request.
+		 * @returns A Promise resolved with corresponding Fetch object.
+		 */
+		public static deserializeFromXmlAsync(xml: string): Promise<MobileCRM.FetchXml.Fetch>;
+		/**
+		 * @since 10.0
 		 * Serializes the Fetch object to XML.
 		 * @param success A callback function for successful asynchronous result. The result argument will carry the XML representation of the Fetch object.
 		 * @param failed A callback function for command failure. The error argument will carry the error message.
 		 * @param scope A scope for calling the callbacks. Set to call the callbacks in global scope.
 		 */
 		public serializeToXml(success: (res: string) => void, failed?: (err: string) => void, scope?: any);
+		/**
+		 * @since 10.0
+		 * Serializes the Fetch object to XML.
+		 * @returns A Promise resolved the XML representation of the Fetch object.
+		 */
+		public serializeToXmlAsync(): Promise<string>;
 		/**
 		 * Performs the asynchronous CRM Fetch request.
 		 * @param output A string defining the output format: Array, JSON, XML or DynamicEntities
@@ -751,7 +819,7 @@ declare module MobileCRM.FetchXml {
 		 * @param aggregate Optional parameter defining an aggregation function.
 		 * @returns void
 		 */
-		addAttribute(name: string, alias?: string, aggregate?: string);
+		addAttribute(name: string, alias?: string, aggregate?: string): Attribute;
 		/**
 		 * Adds all entity attributes to the fetch query.
 		 * @returns void
@@ -819,7 +887,7 @@ declare module MobileCRM.FetchXml {
 		constructor(name: string);
 		name: string;
 		aggregate: string;
-		grouby: boolean;
+		groupby: boolean;
 		alias: string;
 		dategrouping: string;
 	}
@@ -939,7 +1007,9 @@ declare module MobileCRM.Services {
         appWasLocked: boolean;
         syncAborted: boolean;
         adminFullSync: boolean;
-        wasBackgroundSync: boolean;
+		wasBackgroundSync: boolean;
+		connectFailed: boolean;
+		webError: boolean;
     }
     class AddressBookService {
         public static getService(errorCallback?: (error: string) => void, scope?: any): AddressBookService;
@@ -1151,7 +1221,7 @@ declare module MobileCRM.UI {
 		/** Determines if form can be closed, i.e. there are no unsaved data being edited.*/
 		canClose: boolean;
 		/** Gets the specific context object for onChange and onSave handlers. The onChange context contains single property 'changedItem' with the name of the changed detail item and the onSave context contains property 'errorMessage' which can be used to break the save process with certain error message.*/
-		context?: IFormSaveContext | IFormChangeContext;
+		context?: IFormSaveContext | IFormChangeContext | IFormDetailCollectionChangeContext;
         /** Gets the current view of entity list.*/
         currentView: string;
 		/** Gets the form controllers (map, web) as an array of { MobileCRM.UI._Controller } objects.*/
@@ -1332,7 +1402,7 @@ declare module MobileCRM.UI {
 		* @param enable Determines whether to enable or disable the command.
 		* @param iParam @since 9.1 Optional parameter defining the additional command parameter (like status code value for 'ChangeStatus'; command).
 		*/
-		public static enableCommand(command: string, enable: boolean, iParam?: number);
+		public static enableCommand(command: string, enable: boolean, iParam: number);
 		/**
 		* Shows a please wait message, disabling the form except for the close command.
 		* @param caption Wait message.
@@ -1383,7 +1453,13 @@ declare module MobileCRM.UI {
 	}
 	interface IFormChangeContext {
         changedItem: string;
-        selectedView: string;
+		selectedView: string;
+	}
+	/** Represents context of change on entity form detail collection. */
+	interface IFormDetailCollectionChangeContext {
+		newIndex: number;
+		oldIndex: number;
+		type: number;
 	}
 
 	/**
@@ -1975,7 +2051,9 @@ declare module MobileCRM.UI {
 		multiLine: boolean;
 
 		show(success: (button: string) => void, failed?: (err: string) => void, scope?: any);
+		showAsync(): Promise<string>;
 		static sayText(text: string, success?: () => void, failed?: (Error: string) => void, scope?: any);
+		static sayTextAsync(text: string): Promise<void>;
 	}
 
 	class LookupForm {
@@ -1988,6 +2066,7 @@ declare module MobileCRM.UI {
 		addView(entityName: string, viewName: string, isDefault: boolean);
 		addEntityFilter(entityName: string, filterXML: string);
 		show(success: (obj?: MobileCRM.Reference) => void, failed?: (err: string) => void, scope?: any);
+		showAsync(): Promise<Reference>;
 		addEntityFilter(entityName: string, filterXml);
 	}
 
@@ -1999,6 +2078,7 @@ declare module MobileCRM.UI {
 		allowNull: boolean;
 
 		show(success: (obj?: MobileCRM.Reference) => void, failed?: (err: string) => void, scope?: any);
+		showAsync(): Promise<Reference>;
 	}
 
 	class MediaTab {
@@ -2014,7 +2094,18 @@ declare module MobileCRM.UI {
 		clear(errorCallback?: (error: string) => void);
 		getDocumentInfo(callback: (documentInfo: any) => void, errorCallback?: (error: string) => void, scope?: any);
 		getData(callback: (data: string) => void, errorCallback?: (error: string) => void, scope?: any);
-		getData(viewName: string, callback: (data: string) => void, errorCallback?: (error: string) => void, scope?: any);
+		/**
+		 * Gets the media tab document in form of base64 string.
+		 * @returns A Promise object which will be resolved with the base64-encoded document data.
+		 */
+		getDataAsync(): Promise<string>;
+		static getData(viewName: string, callback: (data: string) => void, errorCallback?: (error: string) => void, scope?: any);
+		/**
+		 * Gets the media tab document in form of base64 string.
+		 * @returns A Promise object which will be resolved with the base64-encoded document data.
+		 * @param viewName The name of the media tab.
+		 */
+		static getDataAsync(viewName: string): Promise<string>;
 		isEmpty(callback: (isEmpty: boolean) => void, errorCallback?: (error: string) => void, scope?: any);
 		/**
 		 * Saves to file to disk.
@@ -2137,6 +2228,8 @@ declare module MobileCRM.UI {
 		 * A request object with single function 'resumeSave'; which has to be called with the validation result (either error message string or 'null' in case of success).
 		 */
 		suspendSave(): IFormSaveHandler;
+		/** @since 10.0 Controls the behavior of the Save command on this form (0=Default, 1=SaveOnly, 2=SaveAndClose). */
+		saveBehavior: number;
 	}
      /** Represents the Javascript equivalent view of tourplan form object. */
 	class TourplanForm {
@@ -2207,14 +2300,16 @@ declare module MobileCRM.UI {
 
 declare module MobileCRM.UI.EntityForm {
 	class DetailCollection {
-		public static getAll(callback: (details: Array<MobileCRM.DynamicEntity>) => void, errorCallback?: (error: string) => void, scope?: any)
-		public static get(callback: (details: MobileCRM.DynamicEntity) => void, errorCallback?: (error: string) => void, scope?: any);
-		public static deleteByIndex(index: number, callback: () => void, errorCallback?: (error: string) => void, scope?: any);
-		public static deleteById(orderDetailId: string, callback: () => void, errorCallback?: (error: string) => void, scope?: any);
-		public static add(product: MobileCRM.Reference, callback: (details: MobileCRM.DynamicEntity) => void, errorCallback?: (error: string) => void, scope?: any);
-		public static addProductWithQuantity(product: MobileCRM.Reference, quantity: number, callback: (details: MobileCRM.DynamicEntity) => void, errorCallback?: (error: string) => void, scope?: any);
-		public static onChange(handler: (entityForm: MobileCRM.UI.EntityForm) => void, bind: boolean, scope?: any);
-		public static onSelectedViewChanged(handler: (entityForm: MobileCRM.UI.EntityForm) => void, bind: boolean, scope?: any);
+		static getAll(callback: (details: Array<MobileCRM.DynamicEntity>) => void, errorCallback?: (error: string) => void, scope?: any);
+		static getAllAsync(): Promise<MobileCRM.DynamicEntity[]>;
+		static get(index: number, callback: (details: MobileCRM.DynamicEntity) => void, errorCallback?: (error: string) => void, scope?: any);
+		static getAsync(index: number): Promise<MobileCRM.DynamicEntity>;
+		static deleteByIndex(index: number, callback: () => void, errorCallback?: (error: string) => void, scope?: any);
+		static deleteById(orderDetailId: string, callback: () => void, errorCallback?: (error: string) => void, scope?: any);
+		static add(product: MobileCRM.Reference, callback: (details: MobileCRM.DynamicEntity) => void, errorCallback?: (error: string) => void, scope?: any);
+		static addProductWithQuantity(product: MobileCRM.Reference, quantity: number, callback: (details: MobileCRM.DynamicEntity) => void, errorCallback?: (error: string) => void, scope?: any);
+		static onChange(handler: (entityForm: MobileCRM.UI.EntityForm) => void, bind: boolean, scope?: any);
+		static onSelectedViewChanged(handler: (entityForm: MobileCRM.UI.EntityForm) => void, bind: boolean, scope?: any);
 	}
 }
 
